@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from 'next/link';
 import AutoRefresh from './AutoRefresh';
+import SendMailButton from './SendMailButton';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }) {
               <Link href="/" className="nav-link">Live Dashboard</Link>
               <Link href="/report" className="nav-link">Corporate Report</Link>
               <Link href="/state-wise" className="nav-link">State Wise</Link>
+              <SendMailButton />
             </div>
           </div>
         </nav>
