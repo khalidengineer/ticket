@@ -1,4 +1,7 @@
-import React, { Suspense } from 'react';
+"use client";
+
+import React, { Suspense, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Papa from 'papaparse';
 import ReportClient from './ReportClient';
 import ReportFilters from './ReportFilters';
@@ -17,19 +20,40 @@ async function getSheetData() {
   return result.data;
 }
 
-export const dynamic = 'force-dynamic';
+function CorporateReportContent() {
+  const searchParams = useSearchParams();
+  const filterCity = searchParams.get('city') || 'All Cities';
+  const filterCategory = searchParams.get('category') || 'All Categories';
+  const filterPriority = searchParams.get('priority') || 'All Priorities';
+  const filterStatus = searchParams.get('status') || 'All Status';
 
-export default async function CorporateReport({ searchParams }) {
-  const params = await searchParams;
-  const filterCity = params?.city || 'All Cities';
-  const filterCategory = params?.category || 'All Categories';
-  const filterPriority = params?.priority || 'All Priorities';
-  const filterStatus = params?.status || 'All Status';
+  const [rawData, setRawData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  let rawData = [];
-  try {
-    rawData = await getSheetData();
-  } catch (e) {
+  const fetchData = async () => {
+    try {
+      const data = await getSheetData();
+      setRawData(data || []);
+      setError(false);
+    } catch (e) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return <div className="loading">Loading live report...</div>;
+  }
+
+  if (error || !rawData.length) {
     return <div className="loading">Failed to load data.</div>;
   }
 
@@ -213,3 +237,12 @@ export default async function CorporateReport({ searchParams }) {
     </ReportClient>
   );
 }
+
+export default function CorporateReport() {
+  return (
+    <Suspense fallback={<div className="loading">Loading report...</div>}>
+      <CorporateReportContent />
+    </Suspense>
+  );
+}
+

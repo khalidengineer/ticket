@@ -1,11 +1,10 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import CategorySection from './CategorySection';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-// Fetch data on the server component
+// Fetch data
 async function getSheetData() {
   const url = 'https://docs.google.com/spreadsheets/d/1lA4SCfrmV_ZlN4MWjElnfF8RrA1lFMogl1i5o1j6JCE/export?format=csv';
   
@@ -27,11 +26,34 @@ async function getSheetData() {
   return result.data;
 }
 
-export default async function Dashboard() {
-  let rawData = [];
-  try {
-    rawData = await getSheetData();
-  } catch (e) {
+export default function Dashboard() {
+  const [rawData, setRawData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const data = await getSheetData();
+      setRawData(data || []);
+      setError(false);
+    } catch (e) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return <div className="loading">Loading live data...</div>;
+  }
+
+  if (error || !rawData.length) {
     return <div className="loading">Failed to load data.</div>;
   }
 

@@ -1,9 +1,8 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import CategorySection from '../CategorySection';
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 const NCR_LOCATIONS = [
   'Sohna Road', 'Sushant Lok', 'Sector 56', 'Gurgaon Central Warehouse', 'Kitchen Gurgaon', 
@@ -82,11 +81,34 @@ async function getSheetData() {
   return result.data;
 }
 
-export default async function StateWiseDashboard() {
-  let rawData = [];
-  try {
-    rawData = await getSheetData();
-  } catch (e) {
+export default function StateWiseDashboard() {
+  const [rawData, setRawData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const data = await getSheetData();
+      setRawData(data || []);
+      setError(false);
+    } catch (e) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return <div className="loading">Loading live data...</div>;
+  }
+
+  if (error || !rawData.length) {
     return <div className="loading">Failed to load data.</div>;
   }
 
